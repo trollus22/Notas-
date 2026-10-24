@@ -22,8 +22,8 @@ jobs:
 
   ios-ipa:
     name: IPA sin firmar
-    # Se ejecuta en cada push a main y a mano desde Actions → CI → Run workflow.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # Se ejecuta en cada push y a mano desde Actions → CI → Run workflow.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     needs: checks
     runs-on: macos-latest
     steps:

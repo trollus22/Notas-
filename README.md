@@ -46,7 +46,7 @@ npx jest           # tests
 ## Builds de iOS
 
 - **EAS** (en la nube, sin Mac): `npx eas-cli@latest build --platform ios --profile simulator` genera una app para el simulador; el perfil `preview` genera un `.ipa` instalable y necesita una cuenta de Apple Developer.
-- **GitHub Actions**: el flujo `CI` pasa tipos, lint y tests en cada push. En cada push a `main`, y a mano desde Actions → CI → Run workflow, compila además un **IPA sin firmar** (`Notas-sin-firmar.ipa`) que se descarga como artefacto del run. Para instalarlo hay que firmarlo al instalar: TrollStore, Sideloadly o AltStore con tu Apple ID.
+- **GitHub Actions**: el flujo `CI` pasa tipos, lint y tests en cada push. En cada push, y a mano desde Actions → CI → Run workflow, compila además un **IPA sin firmar** (`Notas-sin-firmar.ipa`) que se descarga como artefacto del run. Para instalarlo hay que firmarlo al instalar: TrollStore, Sideloadly o AltStore con tu Apple ID.
 
 ## Estructura
 
