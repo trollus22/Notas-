@@ -1,65 +1,67 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
- */
-
-import '@/global.css';
-
 import { Platform } from 'react-native';
 
+/** Colours measured from the reference recording (light) and their dark counterparts. */
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#2C2C2B',
+    textSecondary: '#767573',
+    textTertiary: '#A3A19F',
+    background: '#FFFFFF',
+    /** Home, settings and sheets. */
+    sidebar: '#F7F6F5',
+    surface: '#F0F0EF',
+    surfacePressed: '#E9E8E6',
+    tabSelected: '#E6E5E3',
+    tabIdle: '#EDECEA',
+    border: '#E6E5E3',
+    hairline: '#EDEDEC',
+    accent: '#2A78D4',
+    danger: '#E03E3E',
+    star: '#F5B400',
+    codeBackground: '#F7F6F3',
+    card: '#FFFFFF',
+    floating: '#FFFFFF',
+    overlay: 'rgba(0, 0, 0, 0.22)',
+    shadow: '#000000',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#D4D4D4',
+    textSecondary: '#9B9B9B',
+    textTertiary: '#6B6B6B',
+    background: '#191919',
+    sidebar: '#202020',
+    surface: '#2A2A2A',
+    surfacePressed: '#333333',
+    tabSelected: '#373737',
+    tabIdle: '#2C2C2C',
+    border: '#373737',
+    hairline: '#2F2F2F',
+    accent: '#2A78D4',
+    danger: '#EB5757',
+    star: '#F5B400',
+    codeBackground: '#252525',
+    card: '#252525',
+    floating: '#2A2A2A',
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    shadow: '#000000',
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type Palette = { [K in keyof typeof Colors.light]: string };
+export type Scheme = keyof typeof Colors;
 
 export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
+  ios: { sans: 'system-ui', serif: 'ui-serif', mono: 'ui-monospace' },
   web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
+    sans: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif',
+    serif: 'Georgia, "Times New Roman", serif',
+    mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
   },
+  default: { sans: 'normal', serif: 'serif', mono: 'monospace' },
 });
 
-export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
-} as const;
+/** Horizontal padding of page content. */
+export const PageGutter = 26;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+/** Space kept free at the bottom of scrolling screens for the floating bar. */
+export const FloatingBarSpace = 96;
