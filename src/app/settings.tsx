@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState, type ReactNode } from 'react';
+import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -49,6 +50,12 @@ export default function SettingsScreen() {
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.sidebar }]}>
       <ScreenTitleBar title="Configuración" />
       <ScrollView contentContainerStyle={styles.content}>
+        <Section title="Twenty" note="Tu panel de Twenty (CRM): notas y tareas de tu cuenta.">
+          <Pressable accessibilityRole="button" onPress={() => router.push('/twenty')} style={styles.navRow}>
+            <Text style={[styles.navText, { color: colors.text }]}>Conectar con Twenty</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+          </Pressable>
+        </Section>
         <Section title="Notificaciones" note="Se aplicarán cuando conectemos tu cuenta a un servidor.">
           {Toggle({
             name: 'pushNotifications',
@@ -168,6 +175,8 @@ function Row({ title, description, children }: { title: string; description?: st
 }
 
 const styles = StyleSheet.create({
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16 },
+  navText: { fontSize: 16 },
   screen: { flex: 1 },
   content: { paddingHorizontal: 18, paddingBottom: 60 },
   section: { marginTop: 18 },
