@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { Colors } from '@/constants/theme';
 import { useScheme } from '@/hooks/use-colors';
+import { TwentySessionProvider } from '@/components/twenty/twenty-session-context';
 import { WorkspaceProvider } from '@/store/workspace-context';
 
 SplashScreen.preventAutoHideAsync();
@@ -40,6 +41,7 @@ function ThemedStack() {
         <Stack.Screen name="recents" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="trash" />
+        <Stack.Screen name="twenty" />
       </Stack>
     </ThemeProvider>
   );
@@ -47,8 +49,10 @@ function ThemedStack() {
 
 export default function RootLayout() {
   return (
-    <WorkspaceProvider onReady={hideSplash}>
-      <ThemedStack />
-    </WorkspaceProvider>
+    <TwentySessionProvider>
+      <WorkspaceProvider onReady={hideSplash}>
+        <ThemedStack />
+      </WorkspaceProvider>
+    </TwentySessionProvider>
   );
 }

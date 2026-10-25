@@ -1,112 +1,53 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
-import { ActionSheet, type SheetAction } from '@/components/sheet';
-import { SidebarPageRow, SidebarSection, TeamspaceRow } from '@/components/sidebar';
+import { LoginForm } from '@/components/twenty/login-form';
+import { useTwentySession } from '@/components/twenty/twenty-session-context';
+import { SidebarSection } from '@/components/sidebar';
 import { FloatingBarSpace } from '@/constants/theme';
 import { useColors } from '@/hooks/use-colors';
-import { trashPage, updateBlock } from '@/lib/editing';
-import { pageTitle } from '@/lib/format';
-import { favoritePages, privatePages, teamspaces } from '@/lib/tree';
-import type { Block } from '@/lib/types';
-import { createAndOpenPage } from '@/store/actions';
-import { useTree, useWorkspace } from '@/store/workspace-context';
+import { TWENTY_OBJECTS } from '@/lib/twenty';
 
+// Inicio: el panel de Twenty. Cada objeto (empresas, personas, tareas…) abre su lista con los datos de tu cuenta.
 export default function HomeScreen() {
   const colors = useColors();
-  const tree = useTree();
-  const workspace = useWorkspace();
-  const [selected, setSelected] = useState<Block | null>(null);
-  const [menu, setMenu] = useState<'private' | 'teams' | null>(null);
+  const { token, signOut } = useTwentySession();
 
-  const favorites = favoritePages(tree);
-  const privates = privatePages(tree);
-  const teams = teamspaces(tree);
-
-  const newPage = (parentId: string | null) => createAndOpenPage(workspace, parentId);
-
-  const selectedActions = (block: Block): SheetAction[] => {
-    if (block.type === 'teamspace') {
-      return [{ label: 'Añadir página', icon: 'add-outline', onPress: () => newPage(block.id) }];
-    }
-    return [
-      {
-        label: block.favorite ? 'Quitar de favoritos' : 'Añadir a favoritos',
-        icon: block.favorite ? 'star' : 'star-outline',
-        onPress: () => workspace.apply(updateBlock(workspace.getTree(), block.id, { favorite: !block.favorite }, Date.now())),
-      },
-      ...(block.type === 'page'
-        ? [{ label: 'Añadir subpágina', icon: 'add-outline' as const, onPress: () => newPage(block.id) }]
-        : []),
-      {
-        label: 'Mover a la papelera',
-        icon: 'trash-outline',
-        destructive: true,
-        onPress: () => workspace.apply(trashPage(workspace.getTree(), block.id, Date.now())),
-      },
-    ];
-  };
+  if (token === undefined) return null;
+  if (token === null) {
+    return (
+      <ScrollView style={{ backgroundColor: colors.sidebar }}>
+        <LoginForm />
+      </ScrollView>
+    );
+  }
 
   return (
-    <>
-      <ScrollView
-        style={{ backgroundColor: colors.sidebar }}
-        contentContainerStyle={{ paddingBottom: FloatingBarSpace + 20 }}>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/recents')} style={styles.recents}>
-          <Text style={[styles.recentsLabel, { color: colors.textSecondary }]}>Recientes</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
-        </Pressable>
-
-        {favorites.length > 0 ? (
-          <SidebarSection id="favorites" title="Favoritos">
-            {favorites.map((page) => (
-              <SidebarPageRow key={page.id} page={page} depth={0} topLevel onLongPress={setSelected} />
-            ))}
-          </SidebarSection>
-        ) : null}
-
-        {privates.length > 0 ? (
-          <SidebarSection id="private" title="Privado" onMore={() => setMenu('private')}>
-            {privates.map((page) => (
-              <SidebarPageRow key={page.id} page={page} depth={0} topLevel onLongPress={setSelected} />
-            ))}
-          </SidebarSection>
-        ) : null}
-
-        <SidebarSection id="teams" title="Espacios de equipo" onMore={() => setMenu('teams')}>
-          {teams.map((team) => (
-            <TeamspaceRow key={team.id} teamspace={team} onLongPress={setSelected} />
-          ))}
-        </SidebarSection>
-      </ScrollView>
-
-      <ActionSheet
-        visible={menu !== null}
-        onClose={() => setMenu(null)}
-        title={menu === 'private' ? 'Privado' : 'Espacios de equipo'}
-        actions={
-          menu === 'private'
-            ? [{ label: 'Nueva página', icon: 'create-outline', onPress: () => newPage(null) }]
-            : teams.map((team) => ({
-                label: `Nueva página en ${team.text}`,
-                icon: 'add-outline' as const,
-                onPress: () => newPage(team.id),
-              }))
-        }
-      />
-      <ActionSheet
-        visible={selected !== null}
-        onClose={() => setSelected(null)}
-        title={selected ? (selected.type === 'teamspace' ? selected.text : pageTitle(selected)) : undefined}
-        actions={selected ? selectedActions(selected) : []}
-      />
-    </>
+    <ScrollView style={{ backgroundColor: colors.sidebar }} contentContainerStyle={{ paddingBottom: FloatingBarSpace + 20 }}>
+      <SidebarSection id="twenty" title="Espacio de trabajo">
+        {TWENTY_OBJECTS.map((o) => (
+          <Pressable
+            key={o.plural}
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/twenty/[object]', params: { object: o.plural } })}
+            style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfacePressed }]}>
+            <Ionicons name={o.icon} size={20} color={colors.textSecondary} />
+            <Text style={[styles.title, { color: colors.text }]}>{o.label}</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+          </Pressable>
+        ))}
+      </SidebarSection>
+      <Pressable accessibilityRole="button" onPress={signOut} style={styles.signOut}>
+        <Text style={[styles.signOutText, { color: colors.danger }]}>Cerrar sesión</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  recents: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 20, paddingTop: 13 },
-  recentsLabel: { fontSize: 15 },
+  row: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 20, gap: 12 },
+  title: { flex: 1, fontSize: 16 },
+  signOut: { alignSelf: 'center', paddingVertical: 24 },
+  signOutText: { fontSize: 15 },
 });
