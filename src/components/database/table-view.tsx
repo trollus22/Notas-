@@ -27,6 +27,7 @@ export interface RowHandlers {
 export function TableView({
   rows,
   columns,
+  titleLabel = 'Task name',
   gutter,
   colors,
   scheme,
@@ -35,6 +36,8 @@ export function TableView({
 }: {
   rows: Block[];
   columns: Property[];
+  /** Header of the title column. */
+  titleLabel?: string;
   gutter: number;
   colors: Palette;
   scheme: Scheme;
@@ -49,7 +52,7 @@ export function TableView({
         <View style={[styles.row, styles.header, lines]}>
           <View style={[styles.cell, styles.headerCell, { width: TITLE_WIDTH }]}>
             <Text style={[styles.titleGlyph, { color: colors.textTertiary }]}>Aa</Text>
-            <Text style={[styles.headerText, { color: colors.textTertiary }]}>Task name</Text>
+            <Text style={[styles.headerText, { color: colors.textTertiary }]}>{titleLabel}</Text>
           </View>
           {columns.map((property) => (
             <View key={property.id} style={[styles.cell, styles.headerCell, styles.divided, lines, { width: WIDTHS[property.type] }]}>

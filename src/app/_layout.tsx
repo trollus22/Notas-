@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { Colors } from '@/constants/theme';
 import { useScheme } from '@/hooks/use-colors';
+import { TwentyGate } from '@/components/twenty/twenty-gate';
 import { TwentySessionProvider } from '@/components/twenty/twenty-session-context';
 import { WorkspaceProvider } from '@/store/workspace-context';
 
@@ -41,7 +42,6 @@ function ThemedStack() {
         <Stack.Screen name="recents" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="trash" />
-        <Stack.Screen name="twenty" />
       </Stack>
     </ThemeProvider>
   );
@@ -51,7 +51,9 @@ export default function RootLayout() {
   return (
     <TwentySessionProvider>
       <WorkspaceProvider onReady={hideSplash}>
-        <ThemedStack />
+        <TwentyGate>
+          <ThemedStack />
+        </TwentyGate>
       </WorkspaceProvider>
     </TwentySessionProvider>
   );

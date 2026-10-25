@@ -187,6 +187,7 @@ export function DatabaseScreen({ database, initialViewId }: { database: Block; i
           <TableView
             rows={rows}
             columns={tableColumns(database, view)}
+            titleLabel={database.titleLabel}
             gutter={GUTTER}
             colors={colors}
             scheme={scheme}

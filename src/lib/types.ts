@@ -104,6 +104,8 @@ export interface Block {
   schema?: Property[];
   /** Databases: saved views. */
   views?: DatabaseView[];
+  /** Databases: header of the title column ("Task name" when unset). */
+  titleLabel?: string;
   /** Database rows: property values keyed by property id. */
   props?: Record<string, PropertyValue>;
   /** Chat messages. */
