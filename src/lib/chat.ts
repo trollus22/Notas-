@@ -35,9 +35,30 @@ export function sendMessage(tree: Tree, chatId: string | null, text: string, now
   const messages = chatMessages(tree, chat.id);
   const [userKey, noticeKey] = generateNKeysBetween(messages[messages.length - 1]?.position ?? null, null, 2);
   const userMessage = newBlock({ type: 'message', role: 'user', parentId: chat.id, position: userKey, text: text.trim() }, now);
+  // Con una agente conectada la respuesta llega de verdad (ver replyMessage): no se añade ningún aviso.
+  if (agentById(agent)?.connected) return { patch: { put: [chat, userMessage], remove: [] }, chatId: chat.id };
   const notice = newBlock(
     { type: 'message', role: 'notice', parentId: chat.id, position: noticeKey, text: agentNotice(agent), ...(agent ? { agent } : {}) },
     now,
   );
   return { patch: { put: [chat, userMessage, notice], remove: [] }, chatId: chat.id };
+}
+
+/** Guarda lo que ha respondido una agente conectada (`assistant`) o por qué no ha podido (`notice`). */
+export function replyMessage(
+  tree: Tree,
+  chatId: string,
+  agent: string,
+  reply: { text: string; session?: string; failed?: boolean },
+  now: number,
+): Patch {
+  const chat = tree.map.get(chatId);
+  if (!chat) return { put: [], remove: [] };
+  const messages = chatMessages(tree, chatId);
+  const [key] = generateNKeysBetween(messages[messages.length - 1]?.position ?? null, null, 1);
+  const message = newBlock(
+    { type: 'message', role: reply.failed ? 'notice' : 'assistant', parentId: chatId, position: key, text: reply.text, agent },
+    now,
+  );
+  return { put: [{ ...chat, updatedAt: now, ...(reply.session ? { session: reply.session } : {}) }, message], remove: [] };
 }

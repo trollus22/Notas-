@@ -1,15 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentAvatar } from '@/components/agent-avatar';
 import { webNoOutline } from '@/components/editor/block-row';
+import { useTwentySession } from '@/components/twenty/twenty-session-context';
 import { AiIcon } from '@/components/notion-icon';
 import { useColors } from '@/hooks/use-colors';
-import { agentById, insertMention, mentionQuery } from '@/lib/agents';
-import { chatMessages, sendMessage } from '@/lib/chat';
+import { agentById, insertMention, mentionQuery, mentionedAgent } from '@/lib/agents';
+import { AgentError, chatWithAgent, stopAgentRun } from '@/lib/agents-api';
+import { chatMessages, replyMessage, sendMessage } from '@/lib/chat';
 import { notConnectedYet } from '@/lib/confirm';
 import { goBack } from '@/lib/navigation';
 import { useTree, useWorkspace } from '@/store/workspace-context';
@@ -38,16 +40,74 @@ export default function ChatScreen() {
     setCaret({ start: text.length, end: text.length });
     input.current?.focus();
   };
+  const { token, expire } = useTwentySession();
   const messages = chatMessages(tree, chatId);
   const chat = chatId ? tree.map.get(chatId) : undefined;
   const mentions = mentionQuery(draft);
+  // Respuesta en curso de una agente conectada: texto que va llegando y herramientas que usa.
+  const [live, setLive] = useState<{ agent: string; text: string; tools: string[] } | null>(null);
+  const run = useRef<{ abort: AbortController; runId?: string; agent: string } | null>(null);
+  useEffect(() => () => run.current?.abort.abort(), []);
 
   const send = () => {
-    if (!draft.trim()) return;
-    const result = sendMessage(workspace.getTree(), chatId, draft, Date.now());
+    const text = draft.trim();
+    if (!text || live) return;
+    const result = sendMessage(workspace.getTree(), chatId, text, Date.now());
     workspace.apply(result.patch);
     setChatId(result.chatId);
     setDraft('');
+    const agent = agentById(mentionedAgent(text)?.id ?? chat?.agent);
+    if (!agent?.connected || !token) return;
+
+    const abort = new AbortController();
+    run.current = { abort, agent: agent.id };
+    setLive({ agent: agent.id, text: '', tools: [] });
+    let session = chat?.session;
+    let answer = '';
+    let failed: string | null = null;
+    chatWithAgent({
+      token,
+      agent: agent.id,
+      message: text,
+      sessionId: session,
+      signal: abort.signal,
+      onEvent: (event) => {
+        if (event.type === 'session') {
+          session = event.sessionId;
+          if (run.current) run.current.runId = event.runId;
+        } else if (event.type === 'delta') {
+          answer += event.text;
+          setLive((l) => (l ? { ...l, text: answer } : l));
+        } else if (event.type === 'tool') {
+          setLive((l) => (l && !l.tools.includes(event.name) ? { ...l, tools: [...l.tools, event.name] } : l));
+        } else if (event.type === 'done') {
+          answer = event.text || answer;
+        }
+      },
+    })
+      .catch(async (e: unknown) => {
+        if (abort.signal.aborted) return;
+        if (e instanceof AgentError && e.status === 401) await expire();
+        failed = e instanceof Error ? e.message : 'La agente no ha podido responder.';
+      })
+      .finally(() => {
+        run.current = null;
+        setLive(null);
+        const now = Date.now();
+        const reply = failed
+          ? { text: failed, failed: true }
+          : abort.signal.aborted
+            ? { text: answer.trim() ? `${answer}\n\n(Respuesta detenida.)` : 'Respuesta detenida.', session }
+            : { text: answer.trim() || 'La agente no ha devuelto texto.', session };
+        workspace.apply(replyMessage(workspace.getTree(), result.chatId, agent.id, reply, now));
+      });
+  };
+
+  const stop = () => {
+    const current = run.current;
+    if (!current) return;
+    current.abort.abort();
+    if (current.runId && token) void stopAgentRun(token, current.agent, current.runId);
   };
 
   const circle = [styles.circle, { backgroundColor: colors.floating, borderColor: colors.border, shadowColor: colors.shadow }];
@@ -113,10 +173,26 @@ export default function ChatScreen() {
                     {who ? <AgentAvatar agent={who} size={24} /> : <AiIcon size={18} />}
                     <Text style={[styles.whoName, { color: colors.textSecondary }]}>{who?.name ?? 'IA'}</Text>
                   </View>
-                  <Text style={[styles.replyText, { color: colors.textSecondary }]}>{message.text}</Text>
+                  <Text style={[styles.replyText, { color: message.role === 'assistant' ? colors.text : colors.textSecondary }]}>{message.text}</Text>
                 </View>
               );
             })}
+            {live ? (
+              <View style={styles.reply}>
+                <View style={styles.who}>
+                  {agentById(live.agent) ? <AgentAvatar agent={agentById(live.agent)!} size={24} /> : null}
+                  <Text style={[styles.whoName, { color: colors.textSecondary }]}>{live.agent}</Text>
+                </View>
+                {live.text ? (
+                  <Text style={[styles.replyText, { color: colors.text }]}>{live.text}</Text>
+                ) : (
+                  <Text style={[styles.replyText, { color: colors.textTertiary }]}>Pensando…</Text>
+                )}
+                {live.tools.length > 0 ? (
+                  <Text style={[styles.usingTools, { color: colors.textTertiary }]}>Usando: {live.tools.join(', ')}</Text>
+                ) : null}
+              </View>
+            ) : null}
           </ScrollView>
         )}
 
@@ -166,14 +242,20 @@ export default function ChatScreen() {
                 <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
               </Pressable>
               <View style={styles.spacer} />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Enviar"
-                disabled={!draft.trim()}
-                onPress={send}
-                style={[styles.send, { backgroundColor: draft.trim() ? colors.accent : colors.tabSelected }]}>
-                <Ionicons name="arrow-up" size={18} color={draft.trim() ? '#FFFFFF' : colors.textTertiary} />
-              </Pressable>
+              {live ? (
+                <Pressable accessibilityRole="button" accessibilityLabel="Detener respuesta" onPress={stop} style={[styles.send, { backgroundColor: colors.text }]}>
+                  <View style={styles.stopSquare} />
+                </Pressable>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Enviar"
+                  disabled={!draft.trim()}
+                  onPress={send}
+                  style={[styles.send, { backgroundColor: draft.trim() ? colors.accent : colors.tabSelected }]}>
+                  <Ionicons name="arrow-up" size={18} color={draft.trim() ? '#FFFFFF' : colors.textTertiary} />
+                </Pressable>
+              )}
             </View>
           </View>
         </View>
@@ -235,4 +317,6 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13.5 },
   spacer: { flex: 1 },
   send: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  stopSquare: { width: 12, height: 12, borderRadius: 2, backgroundColor: '#FFFFFF' },
+  usingTools: { fontSize: 13 },
 });

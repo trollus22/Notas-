@@ -7,13 +7,15 @@ export interface Agent {
   /** Fondo y letra del avatar, apagados como el resto de la interfaz. */
   bg: string;
   fg: string;
+  /** Responde de verdad (tiene servidor detrás). Las demás guardan el mensaje y lo avisan. */
+  connected?: boolean;
 }
 
 export const AGENTS: Agent[] = [
-  { id: 'pacer', name: 'pacer', role: 'coordina', bg: '#EDE4F7', fg: '#7B5C7E' },
-  { id: 'dev', name: 'dev', role: 'código y builds', bg: '#DCEBF6', fg: '#337EA9' },
-  { id: 'marca', name: 'marca', role: 'diseño', bg: '#FBE6D5', fg: '#B45309' },
-  { id: 'growth', name: 'growth', role: 'contenido', bg: '#FBF0C9', fg: '#8F7340' },
+  { id: 'pacer', name: 'pacer', role: 'coordina', bg: '#EDE4F7', fg: '#7B5C7E', connected: true },
+  { id: 'dev', name: 'dev', role: 'código y builds', bg: '#DCEBF6', fg: '#337EA9', connected: true },
+  { id: 'marca', name: 'marca', role: 'diseño', bg: '#FBE6D5', fg: '#B45309', connected: true },
+  { id: 'growth', name: 'growth', role: 'contenido', bg: '#FBF0C9', fg: '#8F7340', connected: true },
 ];
 
 export const agentById = (id?: string | null): Agent | undefined => AGENTS.find((a) => a.id === id);

@@ -17,17 +17,16 @@ describe('agentes', () => {
     expect(insertMention('hola @d', AGENTS[1])).toBe('hola @dev ');
   });
 
-  it('el chat guarda la agente y el aviso lleva su nombre, sin inventar respuesta', () => {
+  it('sin agente conectada el chat avisa en vez de inventar una respuesta', () => {
     const tree = treeOf();
-    const first = sendMessage(tree, null, '@dev revisa el build', 10);
+    const first = sendMessage(tree, null, 'sin agente concreta', 10);
     const next = applyPatch(tree, first.patch);
-    expect(next.map.get(first.chatId)?.agent).toBe('dev');
+    expect(next.map.get(first.chatId)?.agent).toBeUndefined();
     const msgs = chatMessages(next, first.chatId);
     expect(msgs.map((m) => m.role)).toEqual(['user', 'notice']);
-    expect(msgs[1].text).toBe(agentNotice('dev'));
-    expect(msgs[1].text).toContain('dev todavía no está conectada');
-    // Un mensaje posterior sin @ sigue con la misma agente.
-    const second = sendMessage(next, first.chatId, 'y el de Android', 20);
-    expect(applyPatch(next, second.patch).map.get(first.chatId)?.agent).toBe('dev');
+    expect(msgs[1].text).toBe(agentNotice(undefined));
+    // Un mensaje posterior que menciona a una agente fija el chat con ella.
+    const second = sendMessage(next, first.chatId, '@marca y la portada', 20);
+    expect(applyPatch(next, second.patch).map.get(first.chatId)?.agent).toBe('marca');
   });
 });

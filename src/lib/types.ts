@@ -112,6 +112,8 @@ export interface Block {
   role?: 'user' | 'assistant' | 'notice';
   /** Chats and their replies: the agent they talk to (see lib/agents). */
   agent?: string;
+  /** Chats with a connected agent: id of the conversation on the server, to continue it. */
+  session?: string;
   createdAt: number;
   updatedAt: number;
   viewedAt?: number | null;
