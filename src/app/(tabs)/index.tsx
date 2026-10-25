@@ -1,112 +1,30 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { ActionSheet, type SheetAction } from '@/components/sheet';
-import { SidebarPageRow, SidebarSection, TeamspaceRow } from '@/components/sidebar';
-import { FloatingBarSpace } from '@/constants/theme';
+import { HomeSidebar } from '@/components/home-sidebar';
 import { useColors } from '@/hooks/use-colors';
-import { trashPage, updateBlock } from '@/lib/editing';
-import { pageTitle } from '@/lib/format';
-import { favoritePages, privatePages, teamspaces } from '@/lib/tree';
-import type { Block } from '@/lib/types';
-import { createAndOpenPage } from '@/store/actions';
-import { useTree, useWorkspace } from '@/store/workspace-context';
+import { useIsTablet } from '@/hooks/use-is-tablet';
 
+/** On iPhone this is the Inicio sidebar. On iPad the sidebar is fixed on the left and this pane is empty. */
 export default function HomeScreen() {
   const colors = useColors();
-  const tree = useTree();
-  const workspace = useWorkspace();
-  const [selected, setSelected] = useState<Block | null>(null);
-  const [menu, setMenu] = useState<'private' | 'teams' | null>(null);
+  const tablet = useIsTablet();
 
-  const favorites = favoritePages(tree);
-  const privates = privatePages(tree);
-  const teams = teamspaces(tree);
-
-  const newPage = (parentId: string | null) => createAndOpenPage(workspace, parentId);
-
-  const selectedActions = (block: Block): SheetAction[] => {
-    if (block.type === 'teamspace') {
-      return [{ label: 'Añadir página', icon: 'add-outline', onPress: () => newPage(block.id) }];
-    }
-    return [
-      {
-        label: block.favorite ? 'Quitar de favoritos' : 'Añadir a favoritos',
-        icon: block.favorite ? 'star' : 'star-outline',
-        onPress: () => workspace.apply(updateBlock(workspace.getTree(), block.id, { favorite: !block.favorite }, Date.now())),
-      },
-      ...(block.type === 'page'
-        ? [{ label: 'Añadir subpágina', icon: 'add-outline' as const, onPress: () => newPage(block.id) }]
-        : []),
-      {
-        label: 'Mover a la papelera',
-        icon: 'trash-outline',
-        destructive: true,
-        onPress: () => workspace.apply(trashPage(workspace.getTree(), block.id, Date.now())),
-      },
-    ];
-  };
+  if (!tablet) return <HomeSidebar />;
 
   return (
-    <>
-      <ScrollView
-        style={{ backgroundColor: colors.sidebar }}
-        contentContainerStyle={{ paddingBottom: FloatingBarSpace + 20 }}>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/recents')} style={styles.recents}>
-          <Text style={[styles.recentsLabel, { color: colors.textSecondary }]}>Recientes</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
-        </Pressable>
-
-        {favorites.length > 0 ? (
-          <SidebarSection id="favorites" title="Favoritos">
-            {favorites.map((page) => (
-              <SidebarPageRow key={page.id} page={page} depth={0} topLevel onLongPress={setSelected} />
-            ))}
-          </SidebarSection>
-        ) : null}
-
-        {privates.length > 0 ? (
-          <SidebarSection id="private" title="Privado" onMore={() => setMenu('private')}>
-            {privates.map((page) => (
-              <SidebarPageRow key={page.id} page={page} depth={0} topLevel onLongPress={setSelected} />
-            ))}
-          </SidebarSection>
-        ) : null}
-
-        <SidebarSection id="teams" title="Espacios de equipo" onMore={() => setMenu('teams')}>
-          {teams.map((team) => (
-            <TeamspaceRow key={team.id} teamspace={team} onLongPress={setSelected} />
-          ))}
-        </SidebarSection>
-      </ScrollView>
-
-      <ActionSheet
-        visible={menu !== null}
-        onClose={() => setMenu(null)}
-        title={menu === 'private' ? 'Privado' : 'Espacios de equipo'}
-        actions={
-          menu === 'private'
-            ? [{ label: 'Nueva página', icon: 'create-outline', onPress: () => newPage(null) }]
-            : teams.map((team) => ({
-                label: `Nueva página en ${team.text}`,
-                icon: 'add-outline' as const,
-                onPress: () => newPage(team.id),
-              }))
-        }
-      />
-      <ActionSheet
-        visible={selected !== null}
-        onClose={() => setSelected(null)}
-        title={selected ? (selected.type === 'teamspace' ? selected.text : pageTitle(selected)) : undefined}
-        actions={selected ? selectedActions(selected) : []}
-      />
-    </>
+    <View style={[styles.empty, { backgroundColor: colors.background }]}>
+      <Ionicons name="document-text-outline" size={40} color={colors.textTertiary} />
+      <Text style={[styles.title, { color: colors.text }]}>Elige una página</Text>
+      <Text style={[styles.text, { color: colors.textSecondary }]}>
+        Selecciona una página de la barra lateral o crea una nueva.
+      </Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  recents: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 20, paddingTop: 13 },
-  recentsLabel: { fontSize: 15 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 40 },
+  title: { fontSize: 20, fontWeight: '600', marginTop: 8 },
+  text: { fontSize: 15, textAlign: 'center', lineHeight: 21 },
 });

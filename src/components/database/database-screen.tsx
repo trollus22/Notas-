@@ -11,6 +11,7 @@ import { ActionSheet, Sheet } from '@/components/sheet';
 import { FloatingBarSpace } from '@/constants/theme';
 import { autoGrowProps, useAutoGrow } from '@/hooks/use-auto-grow';
 import { useColors, useScheme } from '@/hooks/use-colors';
+import { useIsTablet } from '@/hooks/use-is-tablet';
 import { notConnectedYet } from '@/lib/confirm';
 import {
   addView,
@@ -47,6 +48,7 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 
 export function DatabaseScreen({ database, initialViewId }: { database: Block; initialViewId?: string }) {
   const colors = useColors();
+  const tablet = useIsTablet();
   const scheme = useScheme();
   const tree = useTree();
   const workspace = useWorkspace();
@@ -94,7 +96,7 @@ export function DatabaseScreen({ database, initialViewId }: { database: Block; i
         onScroll={(event) => setShowTitle(event.nativeEvent.contentOffset.y > 100)}
         contentContainerStyle={{ paddingBottom: FloatingBarSpace + 40 }}
         keyboardShouldPersistTaps="handled">
-        <View style={{ paddingHorizontal: GUTTER }}>
+        <View style={[{ paddingHorizontal: GUTTER }, tablet && styles.headerTablet]}>
           <View style={styles.icon}>
             <NotionIcon icon={database.icon} size={28} empty="none" />
           </View>
@@ -316,6 +318,7 @@ export function DatabaseScreen({ database, initialViewId }: { database: Block; i
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  headerTablet: { width: '100%', maxWidth: 860, alignSelf: 'center' },
   icon: { marginTop: 38, marginBottom: 12, alignSelf: 'flex-start' },
   title: { fontSize: 31, lineHeight: 38, fontWeight: '700', paddingVertical: 0, paddingHorizontal: 0 },
   description: { fontSize: 14, marginTop: 2, marginLeft: 3 },

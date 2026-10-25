@@ -31,6 +31,7 @@ import { coverById } from '@/constants/covers';
 import { FloatingBarSpace, PageGutter } from '@/constants/theme';
 import { autoGrowProps, useAutoGrow } from '@/hooks/use-auto-grow';
 import { useColors, useScheme } from '@/hooks/use-colors';
+import { useIsTablet } from '@/hooks/use-is-tablet';
 import { filterBlockMenu } from '@/lib/block-menu';
 import { confirm } from '@/lib/confirm';
 import {
@@ -95,6 +96,7 @@ export default function PageScreen() {
 function PageEditor({ page }: { page: Block }) {
   const id = page.id;
   const colors = useColors();
+  const tablet = useIsTablet();
   const scheme = useScheme();
   const workspace = useWorkspace();
   const tree = useTree();
@@ -422,7 +424,7 @@ function PageEditor({ page }: { page: Block }) {
             </View>
           ) : null}
 
-          <View style={styles.body}>
+          <View style={[styles.body, tablet && styles.bodyTablet]}>
             {page.icon ? (
               <Pressable
                 accessibilityLabel="Cambiar icono"
@@ -530,6 +532,7 @@ const styles = StyleSheet.create({
   coverButton: { position: 'absolute', right: 12, bottom: 10, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
   coverButtonText: { fontSize: 13, fontWeight: '500' },
   body: { paddingHorizontal: PageGutter },
+  bodyTablet: { width: '100%', maxWidth: 860, alignSelf: 'center' },
   iconButton: { alignSelf: 'flex-start', marginBottom: 12 },
   iconOverCover: { marginTop: -34 },
   iconNoCover: { marginTop: 20 },
