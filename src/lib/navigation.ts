@@ -16,6 +16,7 @@ export function goBack() {
   else router.replace('/');
 }
 
-export function openChat(id: string = 'new') {
-  router.push({ pathname: '/chat/[id]', params: { id } });
+/** Abre un chat; con `agent` (y chat nuevo) empieza hablando con esa agente. */
+export function openChat(id: string = 'new', agent?: string) {
+  router.push({ pathname: '/chat/[id]', params: agent ? { id, agent } : { id } });
 }

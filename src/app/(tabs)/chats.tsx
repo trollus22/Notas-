@@ -1,11 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AiIcon } from '@/components/notion-icon';
+import { AgentAvatar } from '@/components/agent-avatar';
 import { FloatingBarSpace } from '@/constants/theme';
 import { useColors } from '@/hooks/use-colors';
 import { useNow } from '@/hooks/use-now';
-import { notConnectedYet } from '@/lib/confirm';
+import { AGENTS } from '@/lib/agents';
 import { openChat } from '@/lib/navigation';
 import { chats } from '@/lib/tree';
 import type { Block } from '@/lib/types';
@@ -33,19 +33,17 @@ export default function ChatsScreen() {
   return (
     <ScrollView style={{ backgroundColor: colors.sidebar }} contentContainerStyle={[styles.content, { paddingBottom: FloatingBarSpace }]}>
       <Text style={[styles.section, { color: colors.textSecondary }]}>Agentes</Text>
-      <Pressable accessibilityRole="button" onPress={() => openChat()} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfacePressed }]}>
-        <AiIcon size={28} framed />
-        <Text style={[styles.rowLabel, { color: colors.text }]}>IA</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => notConnectedYet('Todos los agentes')}
-        style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfacePressed }]}>
-        <View style={styles.agentsIcon}>
-          <Ionicons name="apps-outline" size={19} color={colors.textSecondary} />
-        </View>
-        <Text style={[styles.rowLabel, { color: colors.text }]}>Todos los agentes</Text>
-      </Pressable>
+      {AGENTS.map((agent) => (
+        <Pressable
+          key={agent.id}
+          accessibilityRole="button"
+          accessibilityLabel={`Chatear con ${agent.name}`}
+          onPress={() => openChat('new', agent.id)}
+          style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfacePressed }]}>
+          <AgentAvatar agent={agent} />
+          <Text style={[styles.rowLabel, { color: colors.text }]}>{agent.name}</Text>
+        </Pressable>
+      ))}
 
       {history.length > 0 ? (
         groupByDay(history, now).map(([label, items]) => (
@@ -57,6 +55,7 @@ export default function ChatsScreen() {
                 accessibilityRole="button"
                 onPress={() => openChat(chat.id)}
                 style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfacePressed }]}>
+                <Ionicons name="chatbubble-outline" size={19} color={colors.textSecondary} style={styles.chatIcon} />
                 <Text numberOfLines={1} style={[styles.rowLabel, { color: colors.text }]}>
                   {chat.text || 'Chat sin título'}
                 </Text>
@@ -64,18 +63,7 @@ export default function ChatsScreen() {
             ))}
           </View>
         ))
-      ) : (
-        <View style={styles.empty}>
-          <AiIcon size={24} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Da el salto a la IA</Text>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Busca en tus páginas, crea bases de datos y mucho más con la IA.
-          </Text>
-          <Pressable accessibilityRole="button" onPress={() => openChat()} style={[styles.button, { backgroundColor: colors.accent }]}>
-            <Text style={styles.buttonText}>Nuevo chat</Text>
-          </Pressable>
-        </View>
-      )}
+      ) : null}
     </ScrollView>
   );
 }
@@ -86,10 +74,5 @@ const styles = StyleSheet.create({
   historySection: { marginTop: 22 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44, paddingHorizontal: 20 },
   rowLabel: { flex: 1, fontSize: 17 },
-  agentsIcon: { width: 28, alignItems: 'center' },
-  empty: { alignItems: 'center', paddingHorizontal: 32, paddingTop: 150, gap: 8 },
-  emptyTitle: { fontSize: 17, fontWeight: '600', marginTop: 10 },
-  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 19 },
-  button: { marginTop: 18, borderRadius: 21, height: 42, paddingHorizontal: 18, justifyContent: 'center' },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '500' },
+  chatIcon: { width: 28, textAlign: 'center' },
 });

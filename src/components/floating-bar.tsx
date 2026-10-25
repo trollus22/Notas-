@@ -51,7 +51,7 @@ function CircleButton({
 
 /**
  * The floating bar at the bottom of every screen: search (or the sidebar
- * button inside pages), "Preguntar a la IA", and a new-page button.
+ * button inside pages), "Escribe a tus agentes", and a new-page button.
  */
 export function FloatingBar({ mode }: { mode: 'search' | 'menu' }) {
   const colors = useColors();
@@ -75,7 +75,7 @@ export function FloatingBar({ mode }: { mode: 'search' | 'menu' }) {
         </CircleButton>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Preguntar a la IA"
+          accessibilityLabel="Escribir a tus agentes"
           onPress={() => openChat()}
           style={({ pressed }) => [
             styles.pill,
@@ -85,7 +85,7 @@ export function FloatingBar({ mode }: { mode: 'search' | 'menu' }) {
           ]}>
           <AiIcon size={28} framed />
           <Text numberOfLines={1} style={[styles.pillLabel, { color: colors.textSecondary }]}>
-            Preguntar a la IA
+            Escribe a tus agentes
           </Text>
         </Pressable>
         <CircleButton label="Nueva página" onPress={newPage} onLongPress={() => setComposeOpen(true)}>

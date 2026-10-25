@@ -110,6 +110,8 @@ export interface Block {
   props?: Record<string, PropertyValue>;
   /** Chat messages. */
   role?: 'user' | 'assistant' | 'notice';
+  /** Chats and their replies: the agent they talk to (see lib/agents). */
+  agent?: string;
   createdAt: number;
   updatedAt: number;
   viewedAt?: number | null;
